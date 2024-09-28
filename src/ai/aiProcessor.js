@@ -3,11 +3,10 @@ const OpenAIService = require('../services/openAIService');
 class AIProcessor {
   constructor() {
     this.openAIService = new OpenAIService();
+    this.userContexts = new Map(); // In-memory storage for user contexts
   }
 
   async processMessage(message, userInfo) {
-    // Here you would implement logic to decide whether to respond
-    // For now, let's respond to every message
     return this.generateResponse(message, userInfo);
   }
 
@@ -23,9 +22,43 @@ class AIProcessor {
   }
 
   async getUserContext(username) {
-    // Implement logic to fetch user context (e.g., chat history, user preferences)
-    // This is a placeholder implementation
-    return { chatHistory: [], preferences: {} };
+    if (!this.userContexts.has(username)) {
+      this.userContexts.set(username, {
+        chatHistory: [],
+        preferences: {},
+        lastSeen: null,
+        messageCount: 0
+      });
+    }
+
+    const userContext = this.userContexts.get(username);
+
+    // Update user context
+    userContext.lastSeen = new Date();
+    userContext.messageCount++;
+
+    // Add the current message to chat history (limit to last 10 messages)
+    userContext.chatHistory.push(message);
+    if (userContext.chatHistory.length > 10) {
+      userContext.chatHistory.shift();
+    }
+
+    // Update user preferences based on message content (example implementation)
+    this.updateUserPreferences(userContext, message);
+
+    return userContext;
+  }
+
+  updateUserPreferences(userContext, message) {
+    // This is a simple example of updating user preferences
+    // You can expand this based on your specific needs
+    if (message.toLowerCase().includes('game')) {
+      userContext.preferences.interestedInGames = true;
+    }
+    if (message.toLowerCase().includes('music')) {
+      userContext.preferences.interestedInMusic = true;
+    }
+    // Add more preference updates based on message content
   }
 
   async getChannelContext() {
